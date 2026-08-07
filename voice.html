@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice AI Agent Chat</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #1a1a1a; color: white; margin: 0; }
+        h1 { margin-bottom: 30px; font-size: 2rem; }
+        #mic-btn { width: 120px; height: 120px; border-radius: 50%; border: none; background: #ff4757; color: white; font-size: 3rem; cursor: pointer; box-shadow: 0 0 20px rgba(255, 71, 87, 0.5); transition: transform 0.2s; }
+        #mic-btn:active { transform: scale(0.95); }
+        #status { margin-top: 25px; font-size: 1.3rem; color: #ff4757; font-weight: bold; }
+        #response { margin-top: 25px; max-width: 600px; text-align: center; font-size: 1.4rem; color: #70a1ff; padding: 0 20px; }
+    </style>
+</head>
+<body>
+    <h1>AI Voice Assistant</h1>
+    <button id="mic-btn" title="Click to Speak">🎙️</button>
+    <div id="status">Click mic to start talking</div>
+    <div id="response"></div>
+
+    <!-- Script link -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
