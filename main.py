@@ -7,8 +7,8 @@ from google import genai
 
 app = FastAPI()
 
-# Tamari API key ahiya direct muki do
-client = genai.Client(api_key="TAMARI_ASLI_API_KEY_AHI_PASTE_KARO")
+# Render na environment variable mathi API key lese
+client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 @app.get("/")
 async def get_index():
@@ -28,18 +28,16 @@ async def chat(request: Request):
     user_text = data.get("message", "")
     
     try:
-        # Model name gemini-2.0-flash kari didhu che
         response = client.models.generate_content(
             model='gemini-2.0-flash',
             contents=user_text,
         )
         ai_reply = response.text
     except Exception as e:
-        # Aa error terminal ma print thase ane frontend par pan jase
-        print("ERROR:", str(e))
-        ai_reply = "Error: " + str(e)
+        ai_reply = "Sorry, mane response apva ma problem thayo."
 
     return {"reply": ai_reply}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
