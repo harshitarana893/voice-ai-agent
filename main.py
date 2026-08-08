@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 from google import genai
+from google.genai import types
 
 app = FastAPI()
 
@@ -32,9 +33,21 @@ async def chat(request: Request):
 
     try:
         client = genai.Client(api_key=api_key)
+        
+        # Gujarati, Hindi, ane English mate Auto Language Detection System Instruction
+        system_instruction = (
+            "You are a friendly, smart, and natural AI best friend. "
+            "Detect the language of the user's input (Gujarati, Hindi, or English). "
+            "You MUST always respond in the EXACT SAME language that the user spoke or typed in. "
+            "Keep your response warm, engaging, and conversational like a real friend."
+        )
+
         response = client.models.generate_content(
             model='gemini-2.0-flash',
             contents=user_text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
         )
         ai_reply = response.text
     except Exception as e:
