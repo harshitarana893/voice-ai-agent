@@ -7,17 +7,27 @@ from google.genai import types
 
 app = FastAPI()
 
+# ==============================================================================
+# 🔑 જો Render ના Environment Variables માંથી Key ન મળે, 
+# તો તમારી Gemini API Key નીચે ડબલ કોટ્સ (" ") વચ્ચે મૂકી દો.
+# દા.ત. FALLBACK_API_KEY = "AIzaSy..."
+# ==============================================================================
+FALLBACK_API_KEY = ""
+
+
 @app.get("/")
 async def get_index():
     if os.path.exists("index.html"):
         return HTMLResponse(open("index.html", encoding="utf-8").read())
-    return HTMLResponse("<h1>index.html file not found</h1>")
+    return HTMLResponse("<h1>Error: index.html file not found!</h1>")
+
 
 @app.get("/voice")
 async def get_voice():
     if os.path.exists("voice.html"):
         return HTMLResponse(open("voice.html", encoding="utf-8").read())
-    return HTMLResponse("<h1>voice.html file not found</h1>")
+    return HTMLResponse("<h1>Error: voice.html file not found!</h1>")
+
 
 @app.get("/static/{file_name}")
 async def get_static(file_name: str):
@@ -26,26 +36,29 @@ async def get_static(file_name: str):
         return FileResponse(file_path)
     return {"error": "File not found"}
 
+
 @app.post("/chat")
 async def chat(request: Request):
-    data = await request.json()
-    user_text = data.get("message", "")
-    
-    # ૧. Render / Environment Variable માંથી API Key શોધશે
-    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    
-    # ૨. જો Render માંથી API Key ન મળે, તો નીચે ડબલ કોટ્સ (" ") ની અંદર તમારી Gemini API Key મૂકી શકો છો
-    FALLBACK_API_KEY = ""  # ઉદાહરણ: "AIzaSy..."
-
-    if not api_key and FALLBACK_API_KEY:
-        api_key = FALLBACK_API_KEY
-
-    if not api_key:
-        return {"reply": "Error: Render માં GOOGLE_API_KEY કે GEMINI_API_KEY નથી મળી રહી. Render નું Environment સેટઅપ ચેક કરો."}
-
     try:
+        data = await request.json()
+        user_text = data.get("message", "")
+
+        # ૧. Render / Environment Variables માંથી Key ચેક કરશે
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+
+        # ૨. જો Environment માંથી ન મળે, તો FALLBACK_API_KEY વાપરશે
+        if not api_key and FALLBACK_API_KEY:
+            api_key = FALLBACK_API_KEY
+
+        # ૩. જો હજુ પણ Key ન મળે, તો મેસેજ આપશે
+        if not api_key:
+            return {
+                "reply": "Error: API Key નથી મળી રહી. main.py માં FALLBACK_API_KEY માં તમારી Key મૂકો અથવા Render માં સેટિંગ્સ ચેક કરો."
+            }
+
+        # Gemini Client કોલ
         client = genai.Client(api_key=api_key.strip())
-        
+
         system_instruction = (
             "You are a friendly, smart, and natural AI best friend. "
             "Detect the language of the user's input (Gujarati, Hindi, or English). "
@@ -60,11 +73,13 @@ async def chat(request: Request):
                 system_instruction=system_instruction
             )
         )
-        ai_reply = response.text if response.text else "No response generated."
-    except Exception as e:
-        ai_reply = f"API Error: {str(e)}"
 
-    return {"reply": ai_reply}
+        ai_reply = response.text if response.text else "No response generated."
+        return {"reply": ai_reply}
+
+    except Exception as e:
+        return {"reply": f"API Error: {str(e)}"}
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
