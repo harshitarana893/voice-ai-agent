@@ -25,16 +25,15 @@ async def chat(request: Request):
     data = await request.json()
     user_text = data.get("message", "")
     
-    # Render na environment variable mathi key lese
+    # Environment Variable તપાસો
     api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
-        return {"reply": "Error: Render ma GOOGLE_API_KEY ke GEMINI_API_KEY nathi mili rahi."}
+        return {"reply": "Error: Render માં GOOGLE_API_KEY નથી મળી રહી. Render નો સેટઅપ ફરીથી ચેક કરો."}
 
     try:
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(api_key=api_key.strip())
         
-        # Gujarati, Hindi, ane English mate Auto Language Detection System Instruction
         system_instruction = (
             "You are a friendly, smart, and natural AI best friend. "
             "Detect the language of the user's input (Gujarati, Hindi, or English). "
@@ -51,7 +50,8 @@ async def chat(request: Request):
         )
         ai_reply = response.text
     except Exception as e:
-        ai_reply = "Sorry, mane response apva ma problem thayo."
+        # સાચી એરર શું છે તે અહીં દેખાશે
+        ai_reply = f"API Error: {str(e)}"
 
     return {"reply": ai_reply}
 
