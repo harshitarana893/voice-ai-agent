@@ -7,8 +7,9 @@ from google import genai
 
 app = FastAPI()
 
-# Render na environment variable mathi API key lese
-client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+# Render na environment variable mathi API key lese (GOOGLE_API_KEY ke GEMINI_API_KEY banne mathi je male e)
+api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=api_key)
 
 @app.get("/")
 async def get_index():
