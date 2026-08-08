@@ -1,35 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-import uvicorn
-import os
-from google import genai
-from google.genai import types
-
-app = FastAPI()
-
-@app.get("/")
-async def get_index():
-    return HTMLResponse(open("index.html", encoding="utf-8").read())
-
-@app.get("/voice")
-async def get_voice():
-    return HTMLResponse(open("voice.html", encoding="utf-8").read())
-
-@app.get("/static/{file_name}")
-async def get_static(file_name: str):
-    return FileResponse(f"static/{file_name}")
-
 @app.post("/chat")
 async def chat(request: Request):
     data = await request.json()
     user_text = data.get("message", "")
     
-    # Environment Variable તપાસો
-    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    # 1. Environment Variable માંથી લેવાનો પ્રયત્ન
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
     
+    # 2. જો Render માંથી ના મળે તો અહીં તમારી API Key ડાયરેક્ટ મૂકી દો (Testing માટે)
     if not api_key:
-        return {"reply": "Error: Render માં GOOGLE_API_KEY નથી મળી રહી. Render નો સેટઅપ ફરીથી ચેક કરો."}
+        api_key = "તમારી_અહીંયા_GEMINI_API_KEY_લખો" # અહીં AIzaSy... વાળી Key પેસ્ટ કરો
 
     try:
         client = genai.Client(api_key=api_key.strip())
@@ -50,11 +29,6 @@ async def chat(request: Request):
         )
         ai_reply = response.text
     except Exception as e:
-        # સાચી એરર શું છે તે અહીં દેખાશે
         ai_reply = f"API Error: {str(e)}"
 
     return {"reply": ai_reply}
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
