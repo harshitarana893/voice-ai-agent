@@ -1,14 +1,47 @@
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, FileResponse
+import uvicorn
+import os
+from google import genai
+from google.genai import types
+
+app = FastAPI()
+
+@app.get("/")
+async def get_index():
+    if os.path.exists("index.html"):
+        return HTMLResponse(open("index.html", encoding="utf-8").read())
+    return HTMLResponse("<h1>index.html file not found</h1>")
+
+@app.get("/voice")
+async def get_voice():
+    if os.path.exists("voice.html"):
+        return HTMLResponse(open("voice.html", encoding="utf-8").read())
+    return HTMLResponse("<h1>voice.html file not found</h1>")
+
+@app.get("/static/{file_name}")
+async def get_static(file_name: str):
+    file_path = f"static/{file_name}"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"error": "File not found"}
+
 @app.post("/chat")
 async def chat(request: Request):
     data = await request.json()
     user_text = data.get("message", "")
     
-    # 1. Environment Variable માંથી લેવાનો પ્રયત્ન
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    # ૧. Render / Environment Variable માંથી API Key શોધશે
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
-    # 2. જો Render માંથી ના મળે તો અહીં તમારી API Key ડાયરેક્ટ મૂકી દો (Testing માટે)
+    # ૨. જો Render માંથી API Key ન મળે, તો નીચે ડબલ કોટ્સ (" ") ની અંદર તમારી Gemini API Key મૂકી શકો છો
+    FALLBACK_API_KEY = ""  # ઉદાહરણ: "AIzaSy..."
+
+    if not api_key and FALLBACK_API_KEY:
+        api_key = FALLBACK_API_KEY
+
     if not api_key:
-        api_key = "તમારી_અહીંયા_GEMINI_API_KEY_લખો" # અહીં AIzaSy... વાળી Key પેસ્ટ કરો
+        return {"reply": "Error: Render માં GOOGLE_API_KEY કે GEMINI_API_KEY નથી મળી રહી. Render નું Environment સેટઅપ ચેક કરો."}
 
     try:
         client = genai.Client(api_key=api_key.strip())
@@ -27,8 +60,12 @@ async def chat(request: Request):
                 system_instruction=system_instruction
             )
         )
-        ai_reply = response.text
+        ai_reply = response.text if response.text else "No response generated."
     except Exception as e:
         ai_reply = f"API Error: {str(e)}"
 
     return {"reply": ai_reply}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
