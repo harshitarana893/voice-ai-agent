@@ -7,10 +7,6 @@ from google import genai
 
 app = FastAPI()
 
-# Render na environment variable mathi API key lese (GOOGLE_API_KEY ke GEMINI_API_KEY banne mathi je male e)
-api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key)
-
 @app.get("/")
 async def get_index():
     return HTMLResponse(open("index.html", encoding="utf-8").read())
@@ -28,7 +24,14 @@ async def chat(request: Request):
     data = await request.json()
     user_text = data.get("message", "")
     
+    # Render na environment variable mathi key lese
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    
+    if not api_key:
+        return {"reply": "Error: Render ma GOOGLE_API_KEY ke GEMINI_API_KEY nathi mili rahi."}
+
     try:
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model='gemini-2.0-flash',
             contents=user_text,
