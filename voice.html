@@ -168,14 +168,13 @@
         const userTextDiv = document.getElementById('userText');
         const aiReplyDiv = document.getElementById('aiReply');
 
-        // Check Web Speech API Support
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (!SpeechRecognition) {
             status.innerText = "Voice support is not available in your browser.";
         } else {
             const recognition = new SpeechRecognition();
-            recognition.lang = 'gu-IN'; // Speech recognition locale
+            recognition.lang = 'gu-IN';
             recognition.continuous = false;
             recognition.interimResults = false;
 
@@ -198,7 +197,6 @@
                 userTextDiv.innerText = text;
                 status.innerText = "Thinking...";
 
-                // Backend API Call (/chat)
                 try {
                     const response = await fetch('/chat', {
                         method: 'POST',
@@ -212,7 +210,6 @@
                     aiReplyDiv.innerText = reply;
                     status.innerText = "Speaking response...";
 
-                    // AI Voice Response (Text-to-Speech)
                     speakResponse(reply);
 
                 } catch (err) {
@@ -220,7 +217,7 @@
                 }
             };
 
-            recognition.onerror = (event) => {
+            recognition.onerror = () => {
                 micBtn.classList.remove('listening');
                 status.innerText = "Speech recognition error. Please try again.";
             };
@@ -230,18 +227,16 @@
             };
         }
 
-        // Multilingual Text-to-Speech Function (Auto Language Detection)
         function speakResponse(text) {
-            window.speechSynthesis.cancel(); // Stop ongoing speech
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
 
-            // Detect script characters to select appropriate voice accent
             if (/[\u0A80-\u0AFF]/.test(text)) {
-                utterance.lang = 'gu-IN'; // Gujarati accent
+                utterance.lang = 'gu-IN';
             } else if (/[\u0900-\u097F]/.test(text)) {
-                utterance.lang = 'hi-IN'; // Hindi accent
+                utterance.lang = 'hi-IN';
             } else {
-                utterance.lang = 'en-US'; // English accent
+                utterance.lang = 'en-US';
             }
             
             utterance.onend = () => {
